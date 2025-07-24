@@ -191,5 +191,5 @@ while not guessed:
           Guessed = True
 
   else:
-    print("not an op")
+    print("stop being an dumb$^#@")
 
