@@ -20,7 +20,36 @@ lock = threading.Lock()
 app = Flask(__name__)
 CORS(app)
 
-# HTML Template with countdown replacing the button
+ASCII_ART = {
+    "Rock": """
+    _______
+---'   ____)
+      (_____)
+      (_____)
+      (____)
+---.__(___)
+""",
+    "Paper": """
+     _______
+---'    ____)____
+           ______)
+          _______)
+         _______)
+---.__________)
+""",
+    "Scissors": """
+    _______
+---'   ____)____
+          ______)
+       __________)
+      (____)
+---.__(___)
+""",
+    "": "Waiting...",
+    None: "Waiting..."
+}
+
+# HTML Template
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -71,7 +100,7 @@ HTML_TEMPLATE = """
         .gesture-label {
             font-weight: bold;
             color: #00FFAA;
-            margin-top: 10px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -91,35 +120,8 @@ HTML_TEMPLATE = """
         </div>
 
         <div class="ascii-section">
-            <div class="gesture-label">Rock</div>
-<pre>
-    _______
----'   ____)
-      (_____)
-      (_____)
-      (____)
----.__(___)
-</pre>
-
-            <div class="gesture-label">Paper</div>
-<pre>
-     _______
----'    ____)____
-           ______)
-          _______)
-         _______)
----.__________)
-</pre>
-
-            <div class="gesture-label">Scissors</div>
-<pre>
-    _______
----'   ____)____
-          ______)
-       __________)
-      (____)
----.__(___)
-</pre>
+            <div class="gesture-label">Computer's Gesture:</div>
+            <pre id="ascii_art">Loading...</pre>
         </div>
     </div>
 
@@ -136,6 +138,7 @@ HTML_TEMPLATE = """
             document.getElementById("result").textContent = "Result: " + data.result;
             document.getElementById("score").textContent = 
                 "Score - Player: " + data.player_score + " | Computer: " + data.computer_score;
+            document.getElementById("ascii_art").textContent = data.ascii_art;
         }
 
         async function playRound() {
@@ -155,7 +158,6 @@ HTML_TEMPLATE = """
                     countdownElement.textContent = "Go!";
                     playRound();
                     setTimeout(() => {
-                        // Restart countdown after 1 second pause on "Go!"
                         startCountdown();
                     }, 1000);
                     clearInterval(interval);
@@ -163,11 +165,8 @@ HTML_TEMPLATE = """
             }, 1000);
         }
 
-        // Initial fetch and start countdown on page load
         fetchData();
         startCountdown();
-
-        // Update status every second as well
         setInterval(fetchData, 1000);
     </script>
 </body>
@@ -186,7 +185,8 @@ def status():
             computer=computer_choice,
             result=result,
             player_score=player_score,
-            computer_score=computer_score
+            computer_score=computer_score,
+            ascii_art=ASCII_ART.get(computer_choice, "Waiting...")
         )
 
 @app.route('/reset')
@@ -272,7 +272,7 @@ def camera_thread():
 
         last_sign = ""
         last_time = 0
-        delay = 2.0  # 2 seconds between readings
+        delay = 2.0
 
         while True:
             ret, frame = cap.read()
@@ -295,7 +295,6 @@ def camera_thread():
                     if gesture and gesture != last_sign:
                         last_sign = gesture
                         last_time = time.time()
-
                         with lock:
                             current_gesture = gesture
 
